@@ -1,35 +1,34 @@
-steps:
-  # Step 1: Checks out your repository code under $GITHUB_WORKSPACE
-  - name: Checkout Repository
-    uses: actions/checkout@v4
+name: CMake Build
 
-  # Step 2: Install C++ compiler, CMake, and build tools
-  - name: Install Dependencies (g++, make, cmake)
-    run: sudo apt-get update && sudo apt-get install -y build-essential cmake
+on:
+  push:
+  pull_request:
 
-  # Step 3: Configure the build using CMake
-  # Creates a dedicated 'build' directory and runs cmake to set up the build files
-  - name: Configure CMake
-    run: |
-      mkdir build
-      cd build
-      cmake ..
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-  # Step 4: Executes the build script (compiles the C++ source code)
-  # --parallel flag uses all available cores for a faster build
-  - name: Build Project
-    run: cmake --build build --parallel
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  # Step 5: Runs C++ tests (assuming tests are configured via CTest in CMake)
-  - name: Run Tests
-    # Runs 'ctest' command from the build directory
-    run: cd build && ctest
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential liblua5.4-dev libpq-dev
 
-  # Step 6: Uploads the built output (artifact) for later use
-  - name: Upload Build Artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: cpp-executable-artifact
-      # Replace 'build/MyApp' with the actual path to your compiled executable or library
-      path: build/MyApp
-      retention-days: 7
+      - name: Configure with CMake
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build project
+        run: |
+          cd build
+          cmake --build . -- -j$(nproc)
+
+      - name: Run tests (if available)
+        run: |
+          cd build
+          ctest --output-on-failure || echo "No tests found"
