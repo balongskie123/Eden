@@ -33,6 +33,14 @@ jobs:
           sudo mkdir -p /usr/include/tbb
           echo "// fake tbb_stddef.h for old FindTBB.cmake" | sudo tee /usr/include/tbb/tbb_stddef.h
 
+      - name: Patch missing standard includes
+        run: |
+          # Add <fstream> to ServerMap.cpp
+          sed -i '1i#include <fstream>' eden/common/src/client/svmap/ServerMap.cpp
+          
+          # Add <map> and <functional> to PacketRegistry.hpp
+          sed -i '1i#include <map>\n#include <functional>' eden/common/include/shaiya/common/net/packet/PacketRegistry.hpp
+
       - name: Configure with CMake
         run: |
           mkdir -p build
