@@ -1,65 +1,60 @@
-name: CMake Build
+# .github/workflows/cmake_build.yml
+name: C++ CMake CI Build
 
 on:
   push:
+    branches: [ "main", "master" ]
   pull_request:
+    branches: [ "main", "master" ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Use a matrix to build on multiple operating systems
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Debug, Release]
+    
+    runs-on: ${{ matrix.os }}
 
     steps:
+      # Step 1: Check out the repository code
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: true # Important if the project uses Git submodules
 
-      - name: Install dependencies
+      # Step 2: Install required dependencies (This step is often necessary for non-standard libs on Linux/macOS)
+      # For a basic CMake project, this can be skipped, but included for robustness.
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            cmake build-essential \
-            liblua5.4-dev \
-            libpq-dev libpqxx-dev \
-            libboost-all-dev \
-            libgoogle-glog-dev \
-            libcrypto++-dev \
-            protobuf-compiler libprotobuf-dev \
-            libgrpc++-dev protobuf-compiler-grpc \
-            libtbb-dev \
-            libyaml-cpp-dev \
-            libpng-dev
+          # Example: sudo apt-get install libsdl2-dev
+          # Add any external library dependencies here if they are not handled by the build system
 
-      - name: Patch TBB compatibility
+      # Step 3: Configure CMake
+      # Creates the build directory and generates build files (like Makefiles or Ninja files)
+      - name: Configure CMake
         run: |
-          sudo mkdir -p /usr/include/tbb
-          echo "// fake tbb_stddef.h for old FindTBB.cmake" | sudo tee /usr/include/tbb/tbb_stddef.h
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
-      - name: Patch missing standard includes
-        run: |
-          # Add <fstream> to ServerMap.cpp
-          sed -i '1i#include <fstream>' eden/common/src/client/svmap/ServerMap.cpp
-          
-          # Add <map> and <functional> to PacketRegistry.hpp
-          sed -i '1i#include <map>\n#include <functional>' eden/common/include/shaiya/common/net/packet/PacketRegistry.hpp
+      # Step 4: Build the project
+      # Uses the generated files to compile the source code
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
 
-      - name: Configure with CMake
-        run: |
-          mkdir -p build
-          cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCRYPTOPP_ROOT_DIR=/usr/include/cryptopp \
-            -DCRYPTOPP_INCLUDE_DIR=/usr/include/cryptopp \
-            -DCRYPTOPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libcryptopp.so \
-            -DTBB_ROOT=/usr/include/tbb \
-            -DYAMLCPP_INCLUDE_DIR=/usr/include/yaml-cpp \
-            -DYAMLCPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libyaml-cpp.so
-
-      - name: Build project
-        run: |
-          cd build
-          cmake --build . -- -j$(nproc)
-
-      - name: Run tests (if available)
-        run: |
-          cd build
-          ctest --output-on-failure || echo "No tests found"
+      # Step 5: (Optional) Run tests if your project uses CTest/GoogleTest
+      - name: Run Tests
+        if: runner.os != 'Windows' # Skipping for Windows in this basic example due to potential setup complexity
+        working-directory: ${{github.workspace}}/build
+        run: ctest --output-on-failure
+        
+      # Step 6: (Optional) Upload the resulting executable/library as an artifact
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Eden-executable-${{ matrix.os }}-${{ matrix.build_type }}
+          path: |
+            build/
+            # Update the path above to match the actual location and name of your executable/library
