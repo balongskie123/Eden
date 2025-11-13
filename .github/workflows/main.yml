@@ -17,7 +17,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             cmake build-essential \
-            liblua5.4-dev libpq-dev \
+            liblua5.4-dev \
+            libpq-dev libpqxx-dev \
             libboost-all-dev \
             libgoogle-glog-dev \
             libcrypto++-dev
@@ -26,7 +27,11 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCRYPTOPP_ROOT_DIR=/usr/include/cryptopp \
+            -DCRYPTOPP_INCLUDE_DIR=/usr/include/cryptopp \
+            -DCRYPTOPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libcryptopp.so
 
       - name: Build project
         run: |
