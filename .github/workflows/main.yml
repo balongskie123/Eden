@@ -1,29 +1,3 @@
-This is a GitHub Actions workflow to build, test, and package a C++ project using CMake.
-
-name: C++ CI/CD Pipeline (CMake)
-
-Controls when the workflow should run.
-
-on:
-
-Triggers the workflow on push or pull request events, but only for the 'main' branch
-
-push:
-branches: [ "main" ]
-pull_request:
-branches: [ "main" ]
-
-Allows you to run this workflow manually from the Actions tab
-
-workflow_dispatch:
-
-A workflow run is made up of one or more jobs.
-
-jobs:
-build_and_test:
-# Use the latest Ubuntu environment for a C++ build
-runs-on: ubuntu-latest
-
 steps:
   # Step 1: Checks out your repository code under $GITHUB_WORKSPACE
   - name: Checkout Repository
