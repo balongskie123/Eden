@@ -1,4 +1,4 @@
-
+steps:
   # Step 1: Checks out your repository code under $GITHUB_WORKSPACE
   - name: Checkout Repository
     uses: actions/checkout@v4
