@@ -25,7 +25,8 @@ jobs:
             protobuf-compiler libprotobuf-dev \
             libgrpc++-dev protobuf-compiler-grpc \
             libtbb-dev \
-            libyaml-cpp-dev
+            libyaml-cpp-dev \
+            libpng-dev
 
       - name: Patch TBB compatibility
         run: |
