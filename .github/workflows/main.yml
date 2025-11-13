@@ -16,12 +16,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake build-essential liblua5.4-dev libpq-dev
+          # Install Boost development libraries
+          sudo apt-get install -y libboost-all-dev
 
       - name: Configure with CMake
         run: |
           mkdir -p build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DBOOST_ROOT=/usr/include/boost
 
       - name: Build project
         run: |
