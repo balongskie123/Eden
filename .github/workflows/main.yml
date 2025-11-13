@@ -22,7 +22,9 @@ jobs:
             libboost-all-dev \
             libgoogle-glog-dev \
             libcrypto++-dev \
-            protobuf-compiler libprotobuf-dev
+            protobuf-compiler libprotobuf-dev \
+            libgrpc++-dev protobuf-compiler-grpc \
+            libtbb-dev
 
       - name: Configure with CMake
         run: |
