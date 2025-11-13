@@ -19,7 +19,8 @@ jobs:
             cmake build-essential \
             liblua5.4-dev libpq-dev \
             libboost-all-dev \
-            libgoogle-glog-dev
+            libgoogle-glog-dev \
+            libcrypto++-dev
 
       - name: Configure with CMake
         run: |
