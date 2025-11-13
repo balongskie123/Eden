@@ -1,4 +1,4 @@
-steps:
+steps: # This MUST be indented under the job name (build_and_test)
   # Step 1: Checks out your repository code under $GITHUB_WORKSPACE
   - name: Checkout Repository
     uses: actions/checkout@v4
