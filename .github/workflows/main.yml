@@ -1,0 +1,61 @@
+This is a GitHub Actions workflow to build, test, and package a C++ project using CMake.
+
+name: C++ CI/CD Pipeline (CMake)
+
+Controls when the workflow should run.
+
+on:
+
+Triggers the workflow on push or pull request events, but only for the 'main' branch
+
+push:
+branches: [ "main" ]
+pull_request:
+branches: [ "main" ]
+
+Allows you to run this workflow manually from the Actions tab
+
+workflow_dispatch:
+
+A workflow run is made up of one or more jobs.
+
+jobs:
+build_and_test:
+# Use the latest Ubuntu environment for a C++ build
+runs-on: ubuntu-latest
+
+steps:
+  # Step 1: Checks out your repository code under $GITHUB_WORKSPACE
+  - name: Checkout Repository
+    uses: actions/checkout@v4
+
+  # Step 2: Install C++ compiler, CMake, and build tools
+  - name: Install Dependencies (g++, make, cmake)
+    run: sudo apt-get update && sudo apt-get install -y build-essential cmake
+
+  # Step 3: Configure the build using CMake
+  # Creates a dedicated 'build' directory and runs cmake to set up the build files
+  - name: Configure CMake
+    run: |
+      mkdir build
+      cd build
+      cmake ..
+
+  # Step 4: Executes the build script (compiles the C++ source code)
+  # --parallel flag uses all available cores for a faster build
+  - name: Build Project
+    run: cmake --build build --parallel
+
+  # Step 5: Runs C++ tests (assuming tests are configured via CTest in CMake)
+  - name: Run Tests
+    # Runs 'ctest' command from the build directory
+    run: cd build && ctest
+
+  # Step 6: Uploads the built output (artifact) for later use
+  - name: Upload Build Artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: cpp-executable-artifact
+      # Replace 'build/MyApp' with the actual path to your compiled executable or library
+      path: build/MyApp
+      retention-days: 7
