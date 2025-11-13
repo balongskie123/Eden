@@ -27,6 +27,11 @@ jobs:
             libtbb-dev \
             libyaml-cpp-dev
 
+      - name: Patch TBB compatibility
+        run: |
+          sudo mkdir -p /usr/include/tbb
+          echo "// fake tbb_stddef.h for old FindTBB.cmake" | sudo tee /usr/include/tbb/tbb_stddef.h
+
       - name: Configure with CMake
         run: |
           mkdir -p build
