@@ -4,8 +4,7 @@
 find_package(absl REQUIRED COMPONENTS synchronization)
 # Also add TBB, which is required for ParallelClientSynchronizer.cpp
 find_package(TBB REQUIRED)
-# Add YamlCpp, which is required by Map.cpp for configuration loading
-find_package(YamlCpp REQUIRED)
+# YamlCpp is found by the parent CMakeLists via a custom macro, so we remove the explicit find_package() here.
 
 # Collect the source files
 file(GLOB_RECURSE SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
