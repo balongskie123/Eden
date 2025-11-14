@@ -8,15 +8,30 @@ on:
 
 jobs:
   build:
-    # Use the latest Ubuntu environment for the runner
-    runs-on: ubuntu-latest
+    # Use a matrix to run the build on both Linux and Windows
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        submodules: true # Ensure all dependencies/submodules are fetched
 
-    # 1. Install Dependencies
-    - name: Install Build Dependencies
+    # --- Windows Dependency Setup (vcpkg) ---
+    - name: Install Dependencies (Windows/vcpkg)
+      if: runner.os == 'Windows'
+      uses: lukka/run-vcpkg@v11
+      with:
+        # These dependencies correspond to the libs listed in your apt-get block
+        vcpkgArguments: "boost-all:x64-windows protobuf:x64-windows grpc:x64-windows cryptopp:x64-windows tbb:x64-windows yaml-cpp:x64-windows glog:x64-windows libpq:x64-windows libpqxx:x64-windows"
+
+    # --- Linux Dependency Setup (apt-get) ---
+    - name: Install Dependencies (Linux/apt-get)
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -32,31 +47,34 @@ jobs:
           libyaml-cpp-dev \
           libpng-dev
 
-    # 2. Patch TBB compatibility
-    - name: Patch TBB compatibility
+    # --- Linux Specific Patch (Required only for Linux TBB setup) ---
+    - name: Patch TBB compatibility (Linux Only)
+      if: runner.os == 'Linux'
       run: |
         sudo mkdir -p /usr/include/tbb
         echo "// fake tbb_stddef.h for old FindTBB.cmake" | sudo tee /usr/include/tbb/tbb_stddef.h
 
-    # 3. Configure with CMake
+    # --- Configure with CMake (Common Step) ---
     - name: Configure with CMake
       run: |
         mkdir -p build
         cd build
+        # On Windows, vcpkg automatically sets up the toolchain and paths.
+        # On Linux, your custom paths are maintained.
         cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
-          -DCRYPTOPP_ROOT_DIR=/usr/include/cryptopp \
-          -DCRYPTOPP_INCLUDE_DIR=/usr/include/cryptopp \
-          -DCRYPTOPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libcryptopp.so \
-          -DTBB_ROOT=/usr/include/tbb \
-          -DYAMLCPP_INCLUDE_DIR=/usr/include/yaml-cpp \
-          -DYAMLCPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libyaml-cpp.so
+          -DCRYPTOPP_ROOT_DIR=${{ runner.os == 'Linux' && '/usr/include/cryptopp' || '' }} \
+          -DCRYPTOPP_INCLUDE_DIR=${{ runner.os == 'Linux' && '/usr/include/cryptopp' || '' }} \
+          -DCRYPTOPP_LIBRARY=${{ runner.os == 'Linux' && '/usr/lib/x86_64-linux-gnu/libcryptopp.so' || '' }} \
+          -DTBB_ROOT=${{ runner.os == 'Linux' && '/usr/include/tbb' || '' }} \
+          -DYAMLCPP_INCLUDE_DIR=${{ runner.os == 'Linux' && '/usr/include/yaml-cpp' || '' }} \
+          -DYAMLCPP_LIBRARY=${{ runner.os == 'Linux' && '/usr/lib/x86_64-linux-gnu/libyaml-cpp.so' || '' }}
 
     # 4. Build project
     - name: Build project
       run: |
         cd build
-        cmake --build . -- -j$(nproc)
+        cmake --build . --config Release -- -j$(nproc)
 
     # 5. Run tests (if available)
     - name: Run tests (if available)
@@ -68,5 +86,5 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: server-executables
+        name: server-executables-${{ matrix.os }}
         path: build/eden/ # Uploads the entire contents of the eden directory in the build folder
