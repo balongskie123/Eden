@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include <shaiya/common/net/Session.hpp>
 #include <shaiya/common/net/packet/ExecutionType.hpp>
 #include <shaiya/common/net/packet/Packet.hpp>
