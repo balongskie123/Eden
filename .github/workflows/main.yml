@@ -26,6 +26,7 @@ jobs:
       if: runner.os == 'Windows'
       uses: lukka/run-vcpkg@v11
       with:
+        vcpkgCommitId: '94d756d11b3334fd9100d83b544d6732f750b380' # Specifies vcpkg version
         # These dependencies correspond to the libs listed in your apt-get block
         vcpkgArguments: "boost-all:x64-windows protobuf:x64-windows grpc:x64-windows cryptopp:x64-windows tbb:x64-windows yaml-cpp:x64-windows glog:x64-windows libpq:x64-windows libpqxx:x64-windows"
 
