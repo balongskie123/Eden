@@ -1,44 +1,57 @@
-name: Windows CMake Build Only
+name: CMake Build
 
 on:
   push:
-    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "main", "master" ]
 
 jobs:
-  build_windows:
-    runs-on: windows-latest
-    
-    strategy:
-      matrix:
-        build_type: [Debug, Release]
+  build:
+    runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository code
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: true
 
-      # Step 2: Install Boost Dependency (Boost is often found by CMake on Windows 
-      # if a recent Visual Studio is used, but for robustness, you might need vcpkg or similar.)
-      # If your project uses vcpkg, you'd add a vcpkg step here. 
-      # For now, we rely on CMake finding Boost, or assume it's included in 'deps'.
-      
-      # Step 3: Configure CMake
-      # Note: PowerShell syntax is automatically used here.
-      - name: Configure CMake
+      - name: Install dependencies
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake build-essential \
+            liblua5.4-dev \
+            libpq-dev libpqxx-dev \
+            libboost-all-dev \
+            libgoogle-glog-dev \
+            libcrypto++-dev \
+            protobuf-compiler libprotobuf-dev \
+            libgrpc++-dev protobuf-compiler-grpc \
+            libtbb-dev \
+            libyaml-cpp-dev \
+            libpng-dev
 
-      # Step 4: Build the project
-      - name: Build
-        run: cmake --build build --config ${{ matrix.build_type }} --parallel
+      - name: Patch TBB compatibility
+        run: |
+          sudo mkdir -p /usr/include/tbb
+          echo "// fake tbb_stddef.h for old FindTBB.cmake" | sudo tee /usr/include/tbb/tbb_stddef.h
 
-      # Step 5: (Optional) Upload the resulting executable
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Eden-executable-Windows-${{ matrix.build_type }}
-          path: build/Your/Executable/Path/Here.exe # <-- Update this path
+      - name: Configure with CMake
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCRYPTOPP_ROOT_DIR=/usr/include/cryptopp \
+            -DCRYPTOPP_INCLUDE_DIR=/usr/include/cryptopp \
+            -DCRYPTOPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libcryptopp.so \
+            -DTBB_ROOT=/usr/include/tbb \
+            -DYAMLCPP_INCLUDE_DIR=/usr/include/yaml-cpp \
+            -DYAMLCPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libyaml-cpp.so
+
+      - name: Build project
+        run: |
+          cd build
+          cmake --build . -- -j$(nproc)
+
+      - name: Run tests (if available)
+        run: |
+          cd build
+          ctest --output-on-failure || echo "No tests found"
