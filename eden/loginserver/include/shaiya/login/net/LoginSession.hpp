@@ -1,4 +1,5 @@
 #pragma once
+#include <crypto++/osrng.h> // Or <crypto++/cryptlib.h> or a more specific base header
 #include <shaiya/common/crypto/Aes128Ctr.hpp>
 #include <shaiya/common/net/Session.hpp>
 #include <shaiya/login/net/EncryptionMode.hpp>
