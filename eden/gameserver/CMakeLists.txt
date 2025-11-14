@@ -4,6 +4,8 @@
 find_package(absl REQUIRED COMPONENTS synchronization)
 # Also add TBB, which is required for ParallelClientSynchronizer.cpp
 find_package(TBB REQUIRED)
+# Add YamlCpp, which is required by Map.cpp for configuration loading
+find_package(YamlCpp REQUIRED)
 
 # Collect the source files
 file(GLOB_RECURSE SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
@@ -39,7 +41,10 @@ target_link_libraries(gameserver
             absl::synchronization
             
             # TBB Dependency (Fixes the 'tbb::detail::r1::destroy' undefined reference)
-            TBB::tbb # Use the imported target name if available
+            TBB::tbb
+            
+            # YAML Dependency (Fixes 'typeinfo for YAML::...' undefined references)
+            YamlCpp 
             
             ${GRPC_LIBRARIES} 
             ${PQXX_LIB}
