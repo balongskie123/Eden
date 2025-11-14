@@ -13,7 +13,7 @@
 #include <deque>
 #include <mutex>
 #include <vector>
-
+typedef CryptoPP::byte byte;
 namespace shaiya::net
 {
     /**
