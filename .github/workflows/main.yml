@@ -1,4 +1,3 @@
-# .github/workflows/cmake_build.yml
 name: C++ CMake CI Build
 
 on:
@@ -18,35 +17,40 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Step 1: Check out the repository code
+      # Step 1: Checkout the repository code
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: true # Important if the project uses Git submodules
 
-      # Step 2: Install required dependencies (This step is often necessary for non-standard libs on Linux/macOS)
-      # For a basic CMake project, this can be skipped, but included for robustness.
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
+      # Step 2: Install Boost on macOS (Homebrew) or Linux (apt)
+      - name: Install Boost dependency
         run: |
-          sudo apt-get update
-          # Example: sudo apt-get install libsdl2-dev
-          # Add any external library dependencies here if they are not handled by the build system
+          if [ "${{ runner.os }}" == "macOS" ]; then
+            # Use Homebrew to install Boost on macOS
+            brew install boost
+          elif [ "${{ runner.os }}" == "Linux" ]; then
+            # Use apt to install Boost development libraries on Ubuntu
+            sudo apt-get update
+            # Note: The specific package name might vary; libboost-all-dev is common.
+            sudo apt-get install -y libboost-all-dev
+          fi
+        # No action needed for Windows, as CMake often finds pre-installed Visual Studio components,
+        # or Boost can be included as an external dependency within the project.
 
       # Step 3: Configure CMake
-      # Creates the build directory and generates build files (like Makefiles or Ninja files)
       - name: Configure CMake
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
       # Step 4: Build the project
-      # Uses the generated files to compile the source code
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }} --parallel
 
-      # Step 5: (Optional) Run tests if your project uses CTest/GoogleTest
+      # Step 5: (Optional) Run tests if your project uses CTest
       - name: Run Tests
-        if: runner.os != 'Windows' # Skipping for Windows in this basic example due to potential setup complexity
+        # Only run tests if the build was successful
+        if: success()
         working-directory: ${{github.workspace}}/build
         run: ctest --output-on-failure
         
@@ -57,4 +61,4 @@ jobs:
           name: Eden-executable-${{ matrix.os }}-${{ matrix.build_type }}
           path: |
             build/
-            # Update the path above to match the actual location and name of your executable/library
+            # NOTE: You must update the path above to match the actual location and name of your executable/library
