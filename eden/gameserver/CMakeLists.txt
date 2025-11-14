@@ -42,8 +42,8 @@ target_link_libraries(gameserver
             # TBB Dependency (Fixes the 'tbb::detail::r1::destroy' undefined reference)
             TBB::tbb
             
-            # YAML Dependency (Fixes 'typeinfo for YAML::...' undefined references, using the correct variable name)
-            ${YAML_CPP_LIBRARY}
+            # YAML Dependency (Fixes 'typeinfo for YAML::...' undefined references, using the standard library name)
+            yaml-cpp
             
             ${GRPC_LIBRARIES} 
             ${PQXX_LIB}
