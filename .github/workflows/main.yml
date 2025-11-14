@@ -1,57 +1,72 @@
-name: CMake Build
+name: C++ CMake Build
 
 on:
   push:
+    branches: [ main, master ]
   pull_request:
+    branches: [ main, master ]
 
 jobs:
   build:
+    # Use the latest Ubuntu environment for the runner
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            cmake build-essential \
-            liblua5.4-dev \
-            libpq-dev libpqxx-dev \
-            libboost-all-dev \
-            libgoogle-glog-dev \
-            libcrypto++-dev \
-            protobuf-compiler libprotobuf-dev \
-            libgrpc++-dev protobuf-compiler-grpc \
-            libtbb-dev \
-            libyaml-cpp-dev \
-            libpng-dev
+    # 1. Install Dependencies
+    - name: Install Build Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          liblua5.4-dev \
+          libpq-dev libpqxx-dev \
+          libboost-all-dev \
+          libgoogle-glog-dev \
+          libcrypto++-dev \
+          protobuf-compiler libprotobuf-dev \
+          libgrpc++-dev protobuf-compiler-grpc \
+          libtbb-dev \
+          libyaml-cpp-dev \
+          libpng-dev
 
-      - name: Patch TBB compatibility
-        run: |
-          sudo mkdir -p /usr/include/tbb
-          echo "// fake tbb_stddef.h for old FindTBB.cmake" | sudo tee /usr/include/tbb/tbb_stddef.h
+    # 2. Patch TBB compatibility
+    - name: Patch TBB compatibility
+      run: |
+        sudo mkdir -p /usr/include/tbb
+        echo "// fake tbb_stddef.h for old FindTBB.cmake" | sudo tee /usr/include/tbb/tbb_stddef.h
 
-      - name: Configure with CMake
-        run: |
-          mkdir -p build
-          cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCRYPTOPP_ROOT_DIR=/usr/include/cryptopp \
-            -DCRYPTOPP_INCLUDE_DIR=/usr/include/cryptopp \
-            -DCRYPTOPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libcryptopp.so \
-            -DTBB_ROOT=/usr/include/tbb \
-            -DYAMLCPP_INCLUDE_DIR=/usr/include/yaml-cpp \
-            -DYAMLCPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libyaml-cpp.so
+    # 3. Configure with CMake
+    - name: Configure with CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCRYPTOPP_ROOT_DIR=/usr/include/cryptopp \
+          -DCRYPTOPP_INCLUDE_DIR=/usr/include/cryptopp \
+          -DCRYPTOPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libcryptopp.so \
+          -DTBB_ROOT=/usr/include/tbb \
+          -DYAMLCPP_INCLUDE_DIR=/usr/include/yaml-cpp \
+          -DYAMLCPP_LIBRARY=/usr/lib/x86_64-linux-gnu/libyaml-cpp.so
 
-      - name: Build project
-        run: |
-          cd build
-          cmake --build . -- -j$(nproc)
+    # 4. Build project
+    - name: Build project
+      run: |
+        cd build
+        cmake --build . -- -j$(nproc)
 
-      - name: Run tests (if available)
-        run: |
-          cd build
-          ctest --output-on-failure || echo "No tests found"
+    # 5. Run tests (if available)
+    - name: Run tests (if available)
+      run: |
+        cd build
+        ctest --output-on-failure || echo "No tests found"
+    
+    # NEW STEP: Upload the build folder contents as an artifact
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: server-executables
+        path: build/eden/ # Uploads the entire contents of the eden directory in the build folder
