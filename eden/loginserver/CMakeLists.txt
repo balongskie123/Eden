@@ -24,6 +24,7 @@ target_link_libraries(loginserver
             gpr
             Protobuf
             Grpc
+            absl::synchronization
             ${GRPC_LIBRARIES} # Recommended if you used find_package(gRPC)
             ${PQXX_LIB}
             ${PQ_LIB}
