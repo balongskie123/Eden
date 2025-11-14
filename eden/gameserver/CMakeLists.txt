@@ -2,6 +2,8 @@
 # The Abseil synchronization target is required by gRPC-generated code.
 # We explicitly find Abseil here to ensure its imported targets are available before linking.
 find_package(absl REQUIRED COMPONENTS synchronization)
+# Also add TBB, which is required for ParallelClientSynchronizer.cpp
+find_package(TBB REQUIRED)
 
 # Collect the source files
 file(GLOB_RECURSE SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
@@ -35,6 +37,9 @@ target_link_libraries(gameserver
             
             # Abseil Dependency (Needed for gRPC synchronization primitives)
             absl::synchronization
+            
+            # TBB Dependency (Fixes the 'tbb::detail::r1::destroy' undefined reference)
+            TBB::tbb # Use the imported target name if available
             
             ${GRPC_LIBRARIES} 
             ${PQXX_LIB}
