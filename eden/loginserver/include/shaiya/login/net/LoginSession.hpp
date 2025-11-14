@@ -1,4 +1,5 @@
 #pragma once
+
 #include <crypto++/osrng.h> // Or <crypto++/cryptlib.h> or a more specific base header
 #include <shaiya/common/crypto/Aes128Ctr.hpp>
 #include <shaiya/common/net/Session.hpp>
@@ -10,7 +11,7 @@
 #include <array>
 #include <crypto++/aes.h>
 #include <crypto++/modes.h>
-
+typedef CryptoPP::byte byte;
 namespace shaiya::net
 {
     /**
