@@ -1,5 +1,5 @@
 #include <shaiya/common/client/svmap/ServerMap.hpp>
-
+#include <fstream>
 #include <boost/filesystem.hpp>
 #include <boost/throw_exception.hpp>
 
