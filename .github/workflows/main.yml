@@ -1,4 +1,4 @@
-name: C++ CMake CI Build
+name: Windows CMake Build Only
 
 on:
   push:
@@ -7,38 +7,27 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  build:
-    # Use a matrix to build on multiple operating systems
+  build_windows:
+    runs-on: windows-latest
+    
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Debug, Release]
-    
-    runs-on: ${{ matrix.os }}
 
     steps:
       # Step 1: Checkout the repository code
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true # Important if the project uses Git submodules
+          submodules: true
 
-      # Step 2: Install Boost on macOS (Homebrew) or Linux (apt)
-      - name: Install Boost dependency
-        run: |
-          if [ "${{ runner.os }}" == "macOS" ]; then
-            # Use Homebrew to install Boost on macOS
-            brew install boost
-          elif [ "${{ runner.os }}" == "Linux" ]; then
-            # Use apt to install Boost development libraries on Ubuntu
-            sudo apt-get update
-            # Note: The specific package name might vary; libboost-all-dev is common.
-            sudo apt-get install -y libboost-all-dev
-          fi
-        # No action needed for Windows, as CMake often finds pre-installed Visual Studio components,
-        # or Boost can be included as an external dependency within the project.
-
+      # Step 2: Install Boost Dependency (Boost is often found by CMake on Windows 
+      # if a recent Visual Studio is used, but for robustness, you might need vcpkg or similar.)
+      # If your project uses vcpkg, you'd add a vcpkg step here. 
+      # For now, we rely on CMake finding Boost, or assume it's included in 'deps'.
+      
       # Step 3: Configure CMake
+      # Note: PowerShell syntax is automatically used here.
       - name: Configure CMake
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
@@ -47,18 +36,9 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }} --parallel
 
-      # Step 5: (Optional) Run tests if your project uses CTest
-      - name: Run Tests
-        # Only run tests if the build was successful
-        if: success()
-        working-directory: ${{github.workspace}}/build
-        run: ctest --output-on-failure
-        
-      # Step 6: (Optional) Upload the resulting executable/library as an artifact
+      # Step 5: (Optional) Upload the resulting executable
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Eden-executable-${{ matrix.os }}-${{ matrix.build_type }}
-          path: |
-            build/
-            # NOTE: You must update the path above to match the actual location and name of your executable/library
+          name: Eden-executable-Windows-${{ matrix.build_type }}
+          path: build/Your/Executable/Path/Here.exe # <-- Update this path
