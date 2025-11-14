@@ -19,6 +19,7 @@ target_link_libraries(loginserver
             pthread
             Boost
             gameapiprotocol
+            ${GRPC_LIBRARIES} # Recommended if you used find_package(gRPC)
             Protobuf
             Grpc
             ${PQXX_LIB}
